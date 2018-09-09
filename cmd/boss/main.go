@@ -18,11 +18,6 @@ func main() {
 		log.Println(err)
 	}()
 
-	go func() {
-		receiv := <-bossService.ReadChan
-		log.Println("read: ", receiv)
-	}()
-
 	go bossService.Run()
 
 	for {

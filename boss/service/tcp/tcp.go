@@ -2,7 +2,10 @@ package tcp
 
 import (
 	"bufio"
+	"encoding/json"
+	"fmt"
 	"net"
+	"reflect"
 	"strconv"
 	"time"
 )
@@ -15,7 +18,6 @@ type Service struct {
 	reconnectTime time.Duration
 	Error         chan error
 	WriteChan     chan string
-	ReadChan      chan string
 }
 
 // NewTCPService create tcpService struct
@@ -26,7 +28,6 @@ func NewTCPService(host string, port int) *Service {
 		reconnectTime: time.Second,
 		Error:         make(chan error),
 		WriteChan:     make(chan string),
-		ReadChan:      make(chan string),
 	}
 }
 
@@ -60,6 +61,19 @@ func (s *Service) readStream() {
 			s.Error <- err
 			continue
 		}
-		s.ReadChan <- msg
+
+		// Unmarshal
+		var data interface{}
+		data = nil
+		err = json.Unmarshal([]byte(msg), &data)
+		if err != nil {
+			fmt.Println(msg)
+		} else if reflect.TypeOf(data).String() == "[]interface {}" {
+			list := data.([]interface{})
+			for _, elem := range list {
+				fmt.Println(elem)
+			}
+		}
+
 	}
 }

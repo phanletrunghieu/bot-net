@@ -2,8 +2,8 @@ package boss
 
 import (
 	"bufio"
+	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"net"
 	"strconv"
@@ -114,8 +114,19 @@ func (s *Service) handleConnection(boss *domain.Boss) {
 
 		switch string(buffCommand) {
 		case cmd.ListBosses:
-			log.Println("xxxx", s.clientService.Clients)
-			fmt.Fprintf(boss.Conn, "%v\r", s.clientService.Clients)
+			buffClients, err := json.Marshal(s.clientService.ListClientID())
+			if err != nil {
+				s.Error <- err
+				break
+			}
+
+			buffClients = append(buffClients, '\r')
+			boss.Conn.Write(buffClients)
+			if err != nil {
+				s.Error <- err
+				break
+			}
+
 			break
 		}
 	}
