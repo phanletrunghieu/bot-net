@@ -19,8 +19,8 @@ func main() {
 	}()
 
 	go func() {
-		err := <-bossService.ReadChan
-		log.Println(err)
+		receiv := <-bossService.ReadChan
+		log.Println("read: ", receiv)
 	}()
 
 	go bossService.Run()
@@ -33,9 +33,11 @@ func main() {
 			continue
 		}
 
-		switch strings.TrimSpace(text) {
-		case "list client":
-			bossService.WriteChan <- (cmd.ListBosses)
+		text = strings.TrimSpace(text)
+
+		switch text {
+		case "list clients":
+			bossService.WriteChan <- cmd.ListBosses
 			break
 		default:
 			bossService.WriteChan <- text

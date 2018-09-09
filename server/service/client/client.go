@@ -69,7 +69,7 @@ func (s *Service) handleConnection(client *domain.Client) {
 		if len(s.Clients) > 0 {
 			log.Println(s.Clients)
 			conn := s.Clients[0].Conn
-			fmt.Fprintf(conn, cmd.Execute+"ls -a\n\r")
+			fmt.Fprintf(conn, cmd.Execute+"ls -a\r")
 			// listen for replies
 			msg, err := bufio.NewReader(conn).ReadString('\r')
 			if err != nil {

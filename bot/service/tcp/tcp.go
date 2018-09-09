@@ -58,7 +58,6 @@ func (s *Service) Run() {
 
 		switch string(buffCommand) {
 		case "a":
-			log.Println("xxxxxx")
 			break
 		case cmd.Execute:
 			s.executeCommand()

