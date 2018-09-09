@@ -113,7 +113,7 @@ func (s *Service) handleConnection(boss *domain.Boss) {
 		log.Println(string(buffCommand))
 
 		switch string(buffCommand) {
-		case cmd.ListBosses:
+		case cmd.ListClients:
 			buffClients, err := json.Marshal(s.clientService.ListClientID())
 			if err != nil {
 				s.Error <- err
@@ -125,6 +125,19 @@ func (s *Service) handleConnection(boss *domain.Boss) {
 			if err != nil {
 				s.Error <- err
 				break
+			}
+
+			break
+
+		case cmd.Broadcast:
+			msg, err := bufio.NewReader(boss.Conn).ReadString('\r')
+			if err != nil {
+				s.Error <- err
+				break
+			}
+
+			for _, client := range s.clientService.Clients {
+				client.Conn.Write([]byte(cmd.Execute + msg + "\r"))
 			}
 
 			break

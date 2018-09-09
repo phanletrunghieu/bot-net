@@ -29,13 +29,26 @@ func main() {
 		}
 
 		text = strings.TrimSpace(text)
+		cmdArr := strings.Split(text, " ")
 
-		switch text {
-		case "list clients":
-			bossService.WriteChan <- cmd.ListBosses
+		if len(cmdArr) <= 0 {
+			fmt.Println("[ERROR] reading input")
+			continue
+		}
+
+		switch cmdArr[0] {
+		case "login":
+			if len(cmdArr) > 2 {
+				bossService.WriteChan <- (cmdArr[1] + " " + cmdArr[2])
+			}
+			break
+		case "list":
+			if len(cmdArr) > 1 && cmdArr[1] == "clients" {
+				bossService.WriteChan <- cmd.ListClients
+			}
 			break
 		default:
-			bossService.WriteChan <- text
+			bossService.WriteChan <- (cmd.Broadcast + text)
 		}
 	}
 }

