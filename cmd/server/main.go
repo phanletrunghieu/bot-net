@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 
-	"github.com/phanletrunghieu/botnet/server/service/boss"
-	"github.com/phanletrunghieu/botnet/server/service/client"
+	"github.com/phanletrunghieu/bot-net/server/service/boss"
+	"github.com/phanletrunghieu/bot-net/server/service/client"
 )
 
 func main() {

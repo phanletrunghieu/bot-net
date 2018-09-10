@@ -7,8 +7,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/phanletrunghieu/botnet/boss/service/tcp"
-	"github.com/phanletrunghieu/botnet/common/cmd"
+	"github.com/phanletrunghieu/bot-net/boss/service/tcp"
+	"github.com/phanletrunghieu/bot-net/common/cmd"
 )
 
 func main() {

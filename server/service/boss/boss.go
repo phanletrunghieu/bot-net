@@ -9,12 +9,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/phanletrunghieu/botnet/server/service/client"
+	"github.com/phanletrunghieu/bot-net/server/service/client"
 
 	"github.com/satori/go.uuid"
 
-	"github.com/phanletrunghieu/botnet/common/cmd"
-	"github.com/phanletrunghieu/botnet/server/domain"
+	"github.com/phanletrunghieu/bot-net/common/cmd"
+	"github.com/phanletrunghieu/bot-net/server/domain"
 )
 
 // Service struct

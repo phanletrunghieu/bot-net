@@ -16,6 +16,7 @@
 *.out
 
 ### Go Patch ###
+/vendor/
 /Godeps/
 /bin/
 

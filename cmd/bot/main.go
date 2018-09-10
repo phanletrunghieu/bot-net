@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/phanletrunghieu/botnet/bot/service/tcp"
+	"github.com/phanletrunghieu/bot-net/bot/service/tcp"
 )
 
 func main() {

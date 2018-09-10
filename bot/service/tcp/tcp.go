@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/phanletrunghieu/botnet/common/cmd"
+	"github.com/phanletrunghieu/bot-net/common/cmd"
 )
 
 // Service struct
