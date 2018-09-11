@@ -56,6 +56,15 @@ func (s *Service) writeStream() {
 
 func (s *Service) readStream() {
 	for {
+		buffCommand := make([]byte, 2)
+		_, err := s.connection.Read(buffCommand)
+		if err != nil {
+			s.Error <- err
+			return
+		}
+
+		// TODO: use buffCommand
+
 		msg, err := bufio.NewReader(s.connection).ReadString('\r')
 		if err != nil {
 			s.Error <- err

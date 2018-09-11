@@ -2,7 +2,6 @@ package client
 
 import (
 	"bufio"
-	"fmt"
 	"log"
 	"net"
 	"strconv"
@@ -15,9 +14,10 @@ import (
 
 // Service struct
 type Service struct {
-	listener net.Listener
-	Clients  map[uuid.UUID]*domain.Client
-	Error    chan error
+	listener         net.Listener
+	Clients          map[uuid.UUID]*domain.Client
+	Error            chan error
+	ClientResultChan chan string
 }
 
 // NewClientService create tcpService struct
@@ -25,9 +25,10 @@ func NewClientService(port int) *Service {
 	ln, err := net.Listen("tcp", ":"+strconv.Itoa(port))
 
 	service := &Service{
-		listener: ln,
-		Clients:  make(map[uuid.UUID]*domain.Client),
-		Error:    make(chan error),
+		listener:         ln,
+		Clients:          make(map[uuid.UUID]*domain.Client),
+		Error:            make(chan error),
+		ClientResultChan: make(chan string),
 	}
 
 	if err != nil {
@@ -74,8 +75,7 @@ func (s *Service) handleConnection(client *domain.Client) {
 			return
 		}
 
-		// TODO: push data to boss
-		fmt.Print(msg)
+		s.ClientResultChan <- msg
 	}
 }
 
