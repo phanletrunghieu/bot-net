@@ -70,11 +70,7 @@ func (s *Service) Run() {
 
 		switch string(buffCommand) {
 		case cmd.Execute:
-			output := s.executeCommand()
-			data := append([]byte(cmd.Result), buffBoss...)
-			data = append(data, output...)
-			data = append(data, '\r')
-			s.connection.Write(data)
+			s.executeCommand(buffBoss)
 		}
 	}
 }
@@ -88,11 +84,11 @@ func (s *Service) Reconnect() {
 	s.Run()
 }
 
-func (s *Service) executeCommand() []byte {
+func (s *Service) executeCommand(buffBoss []byte) {
 	msg, err := bufio.NewReader(s.connection).ReadString('\r')
 	if err != nil {
 		s.Error <- err
-		return nil
+		return
 	}
 
 	msg = strings.TrimSpace(msg)
@@ -100,12 +96,17 @@ func (s *Service) executeCommand() []byte {
 	mcmd := cmdArgs[0]
 	cmdArgs = append(cmdArgs[:0], cmdArgs[0+1:]...)
 
-	command := exec.Command(mcmd, cmdArgs...)
-	output, err := command.Output()
-	if err != nil {
-		s.Error <- err
-		return nil
-	}
+	go func() {
+		command := exec.Command(mcmd, cmdArgs...)
+		output, err := command.Output()
+		if err != nil {
+			s.Error <- err
+			return
+		}
 
-	return output
+		data := append([]byte(cmd.Result), buffBoss...)
+		data = append(data, output...)
+		data = append(data, '\r')
+		s.connection.Write(data)
+	}()
 }
