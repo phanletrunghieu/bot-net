@@ -92,13 +92,13 @@ func (s *Service) handleConnection(boss *domain.Boss) {
 	for {
 		err := s.authenticate(boss)
 		if err != nil {
-			boss.Conn.Write([]byte("Unauthenticated!\r"))
+			boss.Conn.Write([]byte(cmd.Result + "Unauthenticated!\r"))
 			s.Error <- err
 		} else {
 			break
 		}
 	}
-	boss.Conn.Write([]byte("Authenticated!\r"))
+	boss.Conn.Write([]byte(cmd.Result + "Authenticated!\r"))
 	s.Bosses[boss.ID] = boss
 
 	go s.receiveClientResult()
@@ -121,6 +121,7 @@ func (s *Service) handleConnection(boss *domain.Boss) {
 			}
 
 			buffClients = append(buffClients, '\r')
+			buffClients = append([]byte(cmd.Result), buffClients...)
 			boss.Conn.Write(buffClients)
 			if err != nil {
 				s.Error <- err
@@ -144,7 +145,40 @@ func (s *Service) handleConnection(boss *domain.Boss) {
 					// TODO: move error to boss
 				}
 			}
+			break
+		case cmd.UseClient:
+			// get client id
+			buffClientID := make([]byte, 16)
+			_, err = boss.Conn.Read(buffClientID)
+			if err != nil {
+				s.Error <- err
+				break
+			}
 
+			clientID, err := uuid.FromBytes(buffClientID)
+			if err != nil {
+				s.Error <- err
+				continue
+			}
+
+			// get cmd
+			msg, err := bufio.NewReader(boss.Conn).ReadString('\r')
+			if err != nil {
+				s.Error <- err
+				break
+			}
+
+			msg = strings.TrimSpace(msg)
+
+			// find client & send data
+			for _, client := range s.clientService.Clients {
+				if client.ID == clientID {
+					err = s.clientService.SendDataToClient(client, boss, msg)
+					if err != nil {
+						// TODO: move error to boss
+					}
+				}
+			}
 			break
 		}
 	}
