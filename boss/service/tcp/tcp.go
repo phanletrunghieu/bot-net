@@ -56,6 +56,8 @@ func (s *Service) writeStream() {
 
 func (s *Service) readStream() {
 	for {
+		fmt.Print("boss > ")
+
 		buffCommand := make([]byte, 2)
 		_, err := s.connection.Read(buffCommand)
 		if err != nil {
